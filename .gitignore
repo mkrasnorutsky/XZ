@@ -111,3 +111,11 @@ coverage
 /*.gmo
 
 /.vscode/
+
+# Apple builds, validation and SPM outputs
+/out/
+/dist/
+/.build/
+/.swiftpm/
+/Package.resolved
+.DS_Store
