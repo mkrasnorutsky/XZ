@@ -34,3 +34,7 @@ python3 apple/scripts/package_release.py --tag 0.2.0
 Upload the generated archive and checksum to that GitHub release. Commit the generated `dist/Package.swift` as the root manifest at the release revision. Published ZIP bytes/checksums remain immutable; the local template stays in `apple/Package.local.swift`.
 
 The library is distributed under the upstream 0BSD terms described in `COPYING` and `COPYING.0BSD`. Other parts of the full source repository have their own licensing terms; original notices and COPYING files are preserved and bundled. The package builds liblzma only, not the shell scripts or command-line tools.
+
+## Xcode header layout (0.1.1)
+
+Binary module maps live under a module-specific header subdirectory, avoiding duplicate `include/module.modulemap` outputs when Xcode processes several static XCFrameworks together. The library bytes and public include paths are unchanged. Set `APPLE_BUILD_ROOT` to keep `out/` and `dist/` outside the checkout.

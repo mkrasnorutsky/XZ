@@ -3,7 +3,7 @@
 from pathlib import Path
 import plistlib,subprocess,tempfile
 from build_xcframework import ROOT,configure
-artifact=ROOT/'dist/LZMA.xcframework';info=plistlib.loads((artifact/'Info.plist').read_bytes());assert len(info['AvailableLibraries'])==2
+artifact=WORK/'dist/LZMA.xcframework';info=plistlib.loads((artifact/'Info.plist').read_bytes());assert len(info['AvailableLibraries'])==2
 for entry in info['AvailableLibraries']:
     sim=entry.get('SupportedPlatformVariant')=='simulator'
     assert entry['SupportedPlatform']=='ios'
@@ -16,6 +16,8 @@ for entry in info['AvailableLibraries']:
         with tempfile.TemporaryDirectory(prefix='lzma-client-') as directory:
             subprocess.run(['xcrun','clang','-target',triple,'-isysroot',sdk,'-fmodules','-fmodules-cache-path='+directory+'/modules','-I'+str(headers),str(ROOT/'apple/scripts/roundtrip.c'),str(archive),'-o',directory+'/client'],check=True)
 print('PASS: API links for arm64 device and arm64/x86_64 Simulator',flush=True)
-build=ROOT/'out/native-validation';prefix=build/'install';configure(build,prefix,jobs=6)
+build=WORK/'out/native-validation';prefix=build/'install';configure(build,prefix,jobs=6)
 subprocess.run(['xcrun','clang','-I'+str(prefix/'include'),str(ROOT/'apple/scripts/roundtrip.c'),str(prefix/'lib/liblzma.a'),'-o',str(build/'roundtrip')],check=True)
 subprocess.run([str(build/'roundtrip')],check=True)
+import os
+WORK=Path(os.environ.get("APPLE_BUILD_ROOT", str(ROOT))).expanduser().resolve()

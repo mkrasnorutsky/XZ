@@ -3,6 +3,8 @@
 from pathlib import Path
 import argparse,json,shutil,subprocess
 ROOT=Path(__file__).resolve().parents[2]
+import os
+WORK=Path(os.environ.get("APPLE_BUILD_ROOT", str(ROOT))).expanduser().resolve()
 OPTIONS=['-DBUILD_SHARED_LIBS=OFF','-DBUILD_TESTING=OFF','-DXZ_NLS=OFF','-DXZ_DOC=OFF','-DXZ_DOXYGEN=OFF','-DXZ_TOOL_XZ=OFF','-DXZ_TOOL_XZDEC=OFF','-DXZ_TOOL_LZMADEC=OFF','-DXZ_TOOL_LZMAINFO=OFF','-DXZ_TOOL_SCRIPTS=OFF']
 def run(*args):
     print('+',' '.join(map(str,args)),flush=True);return subprocess.run(list(map(str,args)),check=True)
@@ -17,13 +19,14 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--jobs',type=int,default=6);a=p.parse_args();built={}
     configurations=[('ios-arm64','iphoneos','arm64'),('simulator-arm64','iphonesimulator','arm64'),('simulator-x86_64','iphonesimulator','x86_64')]
     for label,sdk,arch in configurations:
-        build=ROOT/'out/apple'/label;prefix=build/'install';configure(build,prefix,sdk,arch,a.jobs);built[label]=prefix
-    out=ROOT/'dist';out.mkdir(exist_ok=True);staging=out/'staging'
+        build=WORK/'out/apple'/label;prefix=build/'install';configure(build,prefix,sdk,arch,a.jobs);built[label]=prefix
+    out=WORK/'dist';out.mkdir(exist_ok=True);staging=out/'staging'
     if staging.exists():shutil.rmtree(staging)
     staging.mkdir();universal=staging/'liblzma.a'
     run('lipo','-create',built['simulator-arm64']/'lib/liblzma.a',built['simulator-x86_64']/'lib/liblzma.a','-output',universal)
     headers=staging/'Headers';shutil.copytree(built['ios-arm64']/'include',headers)
-    (headers/'module.modulemap').write_text('module CLZMA {\n header "lzma.h"\n export *\n}\n')
+    (headers/'CLZMA').mkdir(exist_ok=True)
+    (headers/'CLZMA/module.modulemap').write_text('module CLZMA {\n header "../lzma.h"\n export *\n}\n')
     artifact=out/'LZMA.xcframework'
     if artifact.exists():shutil.rmtree(artifact)
     run('xcodebuild','-create-xcframework','-library',built['ios-arm64']/'lib/liblzma.a','-headers',headers,'-library',universal,'-headers',headers,'-output',artifact)
